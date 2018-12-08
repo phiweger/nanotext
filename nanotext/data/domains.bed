@@ -1,6 +1,9 @@
-A	3	10	zebra	1e-10	.
-A	5	11	lion	1e-7	.
-A	12	22	zebra	1e-11	.
-B	0	30	monkey	0.001	.
-B	10	20	giraffe	1e-9	.
-B	45	77	elefant	1e-19	.
+A_3	3	10	zebra	1e-10	.
+A_3	5	11	lion	1e-7	.
+A_3	12	22	zebra	1e-11	.
+B_1	0	30	monkey	0.001	.
+B_1	10	20	giraffe	1e-9	.
+B_4	45	77	monkey	1e-19	.
+B_4	80	90	monkey	1e-18	.
+B_4	92	95	giraffe	1e-9	.
+B_4	96	99	giraffe	1e-11	.

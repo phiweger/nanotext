@@ -1,6 +1,3 @@
-from pybedtools import Interval, BedTool
-
-
 def get_interval_uid(interval):
     contig, start, end = interval.fields[:3]
     return (contig, int(start), int(end))
@@ -13,6 +10,8 @@ def to_interval(uid, start, end, name='', score='.', strand='.'):
     Main advantage: If working w/ different domain formats (HMMER domtbl
     vs. pfam_scan.pl output), this is the only fn we need to change.
     '''
+    from pybedtools import Interval
+
     return Interval(
         uid, int(start), int(end), name=name, score=score, strand=strand)
 
@@ -48,17 +47,26 @@ def deduplicate(intervals):
     NZ_CVUA01000001.1_953   1402    1718    PF00136.16  3.7e-33 .
     NZ_CVUA01000001.1_957   5       224     PF13476.1   4.5e-25 .
     '''
+    from pybedtools import BedTool
+
+    result = []
     cache = 0
     for i in intervals:
         if not cache:
             cache = i
-            yield i
+            result.append(i)
         else:
-            if i.fields[3] == cache.fields[3]:  # Pfam ID
-                pass
+            if \
+                (i.fields[3] == cache.fields[3]) and \
+                (i.fields[0] == cache.fields[0]):
+                # first condition: same Pfam ID
+                # second condition: same contig
+                pass  # omit domain, i.e. deduplicate
             else:
                 cache = i
-                yield i
+                result.append(i)
+
+    return BedTool(result)
 
 
 def remove_overlap(intervals, deduplicate=True):
@@ -71,6 +79,7 @@ def remove_overlap(intervals, deduplicate=True):
     namely their E-value in the score column. Smaller E-values are more 
     plausible.
     '''
+    from pybedtools import BedTool
     from nanotext.utils import to_interval, is_nested, get_interval_uid
 
     result = intervals.copy()  # do not modify input in place
@@ -106,6 +115,51 @@ def remove_overlap(intervals, deduplicate=True):
     return BedTool(list(result.values()))
 
 
+def split_orf_uid(s):
+    '''
+    in:  NZ_CVUA01000001.1_993
+    out: (NZ_CVUA01000001.1, 993)
+    '''
+    *contig, orf = s.split('_')
+    return '_'.join(contig), int(orf)
+
+
+def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
+    '''
+    We can pass a <fmt_fn> to reformat domain names (e.g. turn PF07005.14
+    into PF07005). By default, the identity function is used, which just
+    returns the input as is.
+
+    If <keep_unknown>, all ORFs w/o domain calls are turned into "unknown"
+    domains, 1 per ORF.
+    '''
+    from collections import defaultdict
+    from nanotext.utils import split_orf_uid
+
+    d = defaultdict(list)
+    
+    for i in domains:
+        d[split_orf_uid(i.fields[0])].append(fmt_fn(i.fields[3]))
+    
+    result = defaultdict(list)
+    cache_orf = 0  # prodigal ORFs are indexed starting at 1
+    cache_contig = ''
+
+    for k, v in sorted(d.items()):  # only sorts keys
+        contig, orf = k
+        
+        # this block makes the routine contig aware
+        if cache_contig != contig:
+            cache_contig = contig
+            cache_orf = 0  # reset the ORF counter when on each new contig
+    
+        if keep_unknown and (cache_orf+1 != orf):
+            result[contig].extend(['unknown']*(orf-cache_orf-1))
+    
+        result[contig].extend(v)
+        cache_orf = orf
+
+    return result
 
 
 
