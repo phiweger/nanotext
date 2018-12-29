@@ -26,21 +26,40 @@ def load_domains(fp, fmt='pfamscan'):
                 _ = next(file)  # skip header
         
             for line in file:
-                d = {k:v for k, v in zip(header, line.split())}
+                d = {k:v for k, v in zip(header, line.strip().split())}
                 # Interval(chrom, start, end, name=".", score=".", strand=".",
                 # otherfields=None)
                 uid =  d['seq_id']
                 start = int(d['envelope_start'])
                 end = int(d['envelope_end'])
-        
                 intervals[(uid, start, end)] = to_interval(
                     uid, start, end, d['hmm_acc'], d['E-value'])
-
         return intervals
 
     elif fmt == 'hmmer':
-        print('Not yet implemented, sorry. Abort!')
-        return None
+        try:
+            intervals = {}
+            with open(fp, 'r') as file:
+                try:
+                    header = next(file).strip().split('\t')
+                except StopIteration:
+                    print('Empty file. Abort!')
+                    return None
+
+                header[4] = 'accession_query'  
+                # originally named "accession" -- would create 2 columns w/ 
+                # same name, bad
+                for line in file:
+                    d = {k:v for k, v in zip(header, line.split('\t'))}
+                    uid = d['query name']
+                    start, end = int(d['from']), int(d['to'])
+                    intervals[(uid, start, end)] = to_interval(
+                        uid, start, end, d['accession'], d['E-value'])
+            return intervals
+        except KeyError:
+            print('Did you reformat the hmmscan result using HmmPy.py?')
+            print('Yes, I thought so. Abort!')
+            return None
 
     else:
         print(f'Only formats "pfamscan" and "hmmer" are supported. Abort!')
@@ -100,7 +119,10 @@ def tokenize_ensembl(anno, keep_unknown=True):
         start = int(g['start'])
         end = int(g['end'])
         strand = g['strand']
-        region = g['seq_region_name']  
+        
+        # TODO: How to filter plasmids? <region> too heterogenous, not 
+        # informative.
+        # region = g['seq_region_name']  
 
         try:
             contig = g['ENA_FEATURE_GENE'][0].split(':')[0]
@@ -120,10 +142,8 @@ def tokenize_ensembl(anno, keep_unknown=True):
                 domains = ['unknown']
             else:
                 pass
-            
-            # unknown label in list bc/ domains is a list which we'll flatten
-            # RESULT: does not make a difference to the odd one out metric
-        if (contig != 'NA') and (region == 'Chromosome'):
+
+        if (contig != 'NA'):  # and (region == 'Chromosome') -- see TODO above
             d[uid] = domains
 
     # By sorting starts and ends, we recreate the contiguity of ORFs.
