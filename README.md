@@ -31,8 +31,6 @@ nanotext taxonomy (calculate a gtdb based taxonomy and get closest functional ge
 
 like sourmash really
 
-
-
 check sourmash publication
 
 nanotext predict model=medium

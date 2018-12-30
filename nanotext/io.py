@@ -155,3 +155,28 @@ def tokenize_ensembl(anno, keep_unknown=True):
         result[k[0]].extend(v)
 
     return genome, result
+
+
+def save_embedding(prefix, model):
+    '''
+    Save gensim model in GloVe format.
+
+    https://radimrehurek.com/gensim/scripts/glove2word2vec.html
+    https://nlp.stanford.edu/projects/glove/
+
+    word1 0.123 0.134 0.532 0.152
+    word2 0.934 0.412 0.532 0.159
+    word3 0.334 0.241 0.324 0.188
+    ...
+    word9 0.334 0.241 0.324 0.188
+    '''
+    # word vectors
+    with open(f'{prefix}.wv.txt', 'w+') as out:
+        for k in model.wv.vocab.keys():
+            v = ' '.join([str(i) for i in model.wv[k]])
+            out.write(f'{k} {v}\n')
+    # document vectors
+    with open(f'{prefix}.dv.txt', 'w+') as out:
+        for k in model.docvecs.doctags.keys():
+            v = ' '.join([str(i) for i in model.docvecs[k]])
+            out.write(f'{k} {v}\n')

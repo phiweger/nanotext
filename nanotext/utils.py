@@ -119,9 +119,15 @@ def split_orf_uid(s):
     '''
     in:  NZ_CVUA01000001.1_993
     out: (NZ_CVUA01000001.1, 993)
+
+    If there is no suffix of ORF uid, return 1
     '''
     *contig, orf = s.split('_')
-    return '_'.join(contig), int(orf)
+    try:
+        return '_'.join(contig), int(orf)
+    except ValueError:  # int() of string
+        return s, 1
+
 
 
 def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
@@ -129,6 +135,8 @@ def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
     We can pass a <fmt_fn> to reformat domain names (e.g. turn PF07005.14
     into PF07005). By default, the identity function is used, which just
     returns the input as is.
+
+    To e.g. reformat PF00815.1 -> PF00815: fmt_fn=lambda x: x.split('.')[0]
 
     If <keep_unknown>, all ORFs w/o domain calls are turned into "unknown"
     domains, 1 per ORF.
