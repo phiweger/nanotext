@@ -10,13 +10,14 @@ Install and run tests:
 ```bash
 git clone https://github.com/phiweger/nanotext
 cd nanotext
+pip install -e .
 pytest  # or python setup.py test
 ```
 
 
 As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by 
 
-Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)
+[Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9)
 
 We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document.
 
