@@ -170,6 +170,35 @@ def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
     return result
 
 
+def infer_genome_vector(fp, model):
+    '''
+    From a genome annotation either from Pfam or HMMER (formatted w/ HMMPy.py)
+    infer a genome vector.
 
+    Note that the genomes contigs are concatenated, which at the boundaries of
+    the contigs creates aritificial context, i.e. domains that do not normally
+    co-occur. However, in our experiments this seemed to not affect the
+    accuracy of the resulting vectors much, and for reasonably fragmented
+    genome assemblies this should not affect results much.
+    '''
+    from pybedtools import BedTool
+
+    from nanotext.io import load_embedding, load_domains
+    from nanotext.utils import create_domain_sequence
+
+    result = load_domains(fp, fmt='hmmer')
+    dom = BedTool(list(result.values()))
+    seq = create_domain_sequence(
+        dom, keep_unknown=True, fmt_fn=lambda x: x.split('.')[0])
+    
+    # concatenate protein domain sequences from contigs
+    flat = [item for sublist in seq.values() for item in sublist]
+    
+    # 200 epochs inference gives a varience < 0.01 cosine distance on
+    # when repeatedly inferring vectors (from our experiments)
+    return model.infer_vector(flat, steps=200)  
+    
+    
+    
 
 

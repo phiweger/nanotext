@@ -1,3 +1,31 @@
+import contextlib
+
+@contextlib.contextmanager
+def smart_open(filename=None):
+    '''
+    stackoverflow.com/questions/17602878
+    '''
+    import sys
+    if filename and filename != '-':
+        fh = open(filename, 'w')
+    else:
+        fh = sys.stdout
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()
+
+
+def eprint(*args, **kwargs):
+    '''
+    stackoverflow.com/questions/5574702
+    '''
+    import sys
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def load_domains(fp, fmt='pfamscan'):
     '''
     fmt .. format can be 'pfamscan' or 'hmmer'
@@ -155,6 +183,17 @@ def tokenize_ensembl(anno, keep_unknown=True):
         result[k[0]].extend(v)
 
     return genome, result
+
+
+def load_embedding(fp, algorithm='doc2vec'):
+    from gensim.models import Doc2Vec
+
+    if algorithm == 'doc2vec':
+        model = Doc2Vec.load(fp)
+        return model
+    else:
+        print('Not implemented yet, sorry.')
+        return None
 
 
 def save_embedding(prefix, model):
