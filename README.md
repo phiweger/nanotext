@@ -19,11 +19,11 @@ As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembl
 
 [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9)
 
-We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document.
+We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document. If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (1.21 GB) and train the embedding yourself.
 
 
 ```bash
-# download corpus from OSF.io and train embedding
+# download corpus and train embedding
 nanotext train --corpus data/corpus.txt --out data/embedding.genomes.model
 
 # or use pretrained model
