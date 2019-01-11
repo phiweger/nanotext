@@ -33,9 +33,9 @@ nanotext search \
     --topn 3 --out -
 # Loading model ...
 # Inferring genome vector ...
-# GCA_000634215.1 0.93
-# GCF_000759935.1 0.93
-# GCF_000759855.1 0.93
+# GCA_000634215.1 0.9344
+# GCF_000759935.1 0.9282
+# GCF_000759855.1 0.9276
 # Done.
 ```
 

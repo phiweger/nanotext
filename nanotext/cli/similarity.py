@@ -8,15 +8,15 @@ import click
 @click.command()
 @click.option(
     '--genome',
-    help='Params for training the embedding.',
+    help='...',
     type=click.Path())
 @click.option(
     '--topn', 
-    help='Corpus of protein domains to train on.',
+    help='...',
     default=10)
 @click.option(
     '--embedding',
-    help='Model name (output).',
+    help='...',
     required=True, type=click.Path())
 @click.option(
     '--out',
@@ -32,9 +32,9 @@ def search(genome, topn, embedding, out):
         --genome .../tara/annotation/TARA_ION_MAG_00012/orfs.domtbl.tsv
     # Loading model ...
     # Inferring genome vector ...
-    # GCA_000634215.1 0.93
-    # GCF_000759935.1 0.93
-    # GCF_000759855.1 0.93
+    # GCA_000634215.1 0.9344
+    # GCF_000759935.1 0.9282
+    # GCF_000759855.1 0.9276
     # Done.
     '''
     from nanotext.io import load_embedding, smart_open, eprint
@@ -48,7 +48,7 @@ def search(genome, topn, embedding, out):
 
     with smart_open(out) as fh:
         for name, cos in sim:
-            fh.write(f'{name}\t{round(cos, 2)}\n')
+            fh.write(f'{name}\t{round(cos, 4)}\n')
     eprint('Done.')
 
 
