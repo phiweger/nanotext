@@ -38,4 +38,7 @@ nanotext search \
 ```
 
 
+If you don't have annotations already, we provided a small `snakemake` workflow [here]().
+
+
 More to follow, watch this space.

@@ -1,5 +1,5 @@
 {
-    "genomes": "/path/to/tara/genomes/",
-    "outdir": "/path/to/tara/results/",
-    "database": "/path/to/pfam_v32/Pfam-A.hmm"
+    "genomes": "genomes/",
+    "outdir": "results/",
+    "database": "/path/to/pfam_v32/Pfam-A.hmm",
 }
