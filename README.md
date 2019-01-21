@@ -38,7 +38,7 @@ nanotext search \
 ```
 
 
-If you don't have annotations already, we provided a small `snakemake` workflow [here]().
+If you don't have annotations already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_tara).
 
 
 More to follow, watch this space.
