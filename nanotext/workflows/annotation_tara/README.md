@@ -4,6 +4,12 @@ To test the annotation workflow, we provided a test MAG in `genomes/`. To run, f
 
 
 ```bash
+# download and set up HMM database
+wget ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam32.0/Pfam-A.hmm.gz
+gunzip Pfam-A.hmm.gz
+hmmpress Pfam-A.hmm
+
+# set config path to wherever the HMM database is, then:
 snakemake --configfile config.json --cores=8  # make this suit your machine
 ```
 
