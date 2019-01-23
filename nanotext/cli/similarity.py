@@ -8,19 +8,19 @@ import click
 @click.command()
 @click.option(
     '--genome',
-    help='...',
+    help='Protein domain annotation',
     type=click.Path())
 @click.option(
     '--topn', 
-    help='...',
+    help='Top n hits to return',
     default=10)
 @click.option(
     '--embedding',
-    help='...',
+    help='Genome embedding model',
     required=True, type=click.Path())
 @click.option(
     '--out',
-    help='Output path. If not specifies, write to stdout.',
+    help='Output path. If not specified, write to stdout.',
     default='-')
 def search(genome, topn, embedding, out):
     '''

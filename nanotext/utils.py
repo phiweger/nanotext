@@ -170,7 +170,7 @@ def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
     return result
 
 
-def infer_genome_vector(fp, model):
+def infer_genome_vector(fp, model, steps=200):
     '''
     From a genome annotation either from Pfam or HMMER (formatted w/ HMMPy.py)
     infer a genome vector.
@@ -180,6 +180,9 @@ def infer_genome_vector(fp, model):
     co-occur. However, in our experiments this seemed to not affect the
     accuracy of the resulting vectors much, and for reasonably fragmented
     genome assemblies this should not affect results much.
+
+    We infer the vector w/ 200 steps (iterations) which during testing provided
+    a mean cosine distance of the estimates < 0.01 -- more steps will reduce this variance and increase time needed to compute the vector.
     '''
     from pybedtools import BedTool
 
@@ -196,7 +199,7 @@ def infer_genome_vector(fp, model):
     
     # 200 epochs inference gives a varience < 0.01 cosine distance on
     # when repeatedly inferring vectors (from our experiments)
-    return model.infer_vector(flat, steps=200)  
+    return model.infer_vector(flat, steps=steps)  
     
     
     
