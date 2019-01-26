@@ -38,11 +38,11 @@ nanotext search \
 # GCF_000759855.1 0.9276
 # Done.
 
-nanotext predict \\
-    --embedding data/embedding.genomes.model \\
-    --genome data/TARA_ION_MAG_00012.domtbl.tsv \\
-    --model data/media_prediction.h5 \\
-    --db data/embedding.media.json \\
+nanotext predict \
+    --embedding data/embedding.genomes.model \
+    --genome data/TARA_ION_MAG_00012.domtbl.tsv \
+    --model data/media_prediction.h5 \
+    --db data/embedding.media.json \
     --topn 3 --out -
 # Using TensorFlow backend.
 # Loading embedding model for genomes ...
