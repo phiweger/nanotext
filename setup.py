@@ -27,8 +27,13 @@ setup(
         'numpy',
         'pandas',
         'tqdm',
+        'pysam==0.15.1',
+        # https://github.com/pysam-developers/pysam/issues/697
         'pybedtools',
+        # relies on pysam
         'gensim',
+        # ==3.7.1
+        # ==3.4
     ],
 
     # https://click.palletsprojects.com/en/7.x/setuptools/#testing-the-script

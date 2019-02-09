@@ -1,3 +1,13 @@
+def cosine(a, b):
+    '''
+    cosine similarity, range(-1, 1)
+    '''
+    from numpy import dot
+    from numpy.linalg import norm
+
+    return dot(a, b)/(norm(a)*norm(b))
+
+
 def get_interval_uid(interval):
     contig, start, end = interval.fields[:3]
     return (contig, int(start), int(end))

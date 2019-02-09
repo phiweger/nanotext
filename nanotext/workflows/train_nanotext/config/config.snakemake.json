@@ -1,0 +1,6 @@
+{
+    "name": "nanotext_r89",
+    "annotations": "/path/to/pfam_scan/annotation/files/",
+    "results": "/path/to/results/",
+    "params": "config/nanotext/"
+}
