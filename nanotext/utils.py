@@ -1,3 +1,18 @@
+def strip_name(name):
+    '''
+    Takes an ID from GTDB and retrieves the original (NCBI) ID -- basically
+    sometimes removes a prefix.
+
+    name = 'RS_GCF_000372645.1'
+    strip_name(i['uid'])
+    # 'GCA_002387705.1'
+    '''
+    if 'UBA' in name:
+        return name
+    else:
+        return '_'.join(name.split('_')[1:])
+
+
 def cosine(a, b):
     '''
     cosine similarity, range(-1, 1)
@@ -180,7 +195,7 @@ def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
     return result
 
 
-def infer_genome_vector(fp, model, steps=200):
+def infer_genome_vector(fp, model, steps=200, fmt='hmmer'):
     '''
     From a genome annotation either from Pfam or HMMER (formatted w/ HMMPy.py)
     infer a genome vector.
@@ -199,7 +214,7 @@ def infer_genome_vector(fp, model, steps=200):
     from nanotext.io import load_embedding, load_domains
     from nanotext.utils import create_domain_sequence
 
-    result = load_domains(fp, fmt='hmmer')
+    result = load_domains(fp, fmt=fmt)
     dom = BedTool(list(result.values()))
     seq = create_domain_sequence(
         dom, keep_unknown=True, fmt_fn=lambda x: x.split('.')[0])

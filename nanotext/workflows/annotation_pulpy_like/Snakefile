@@ -1,0 +1,33 @@
+shell.executable('/bin/bash')
+
+
+IDS, = glob_wildcards(config['genomes'] + '{sample}.fna')  # .gz
+outdir = config['outdir'] + 'data/'
+logdir = config['outdir'] + 'log/'
+
+
+rule all:
+    input:
+        expand(outdir + 'pfam_tables/{sample}_pfam.tsv', sample=IDS),
+
+
+rule call_orfs:
+    input: config['genomes'] + '{id}.fna'
+    output: outdir + 'proteins/{id}.faa'
+    log: logdir + 'prodigal/{id}.log'
+    shell:
+        '''
+        prodigal -i {input} -f gff -a {output} > /dev/null 2> {log}
+        '''
+
+
+rule pfam_scan:
+    input: outdir + 'proteins/{id}.faa'
+    output: outdir + 'pfam_tables/{id}_pfam.tsv'
+    threads: 1
+    params: pfam = config['database']
+    shell:
+        '''
+        pfam_scan.pl -outfile {output} -as -cpu {threads} -fasta {input} \
+            -dir {params.pfam}
+        '''

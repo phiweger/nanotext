@@ -23,10 +23,14 @@ We'll use the pretrained embedding to search for _functionally_ similar genomes,
 
 
 ```bash
-# first download and unzip corpus; then to train the embedding:
+# First, download and unzip corpus from OSF, e.g. using osfclient:
+osf -p pjf7m fetch corpus.txt.zip data/corpus.txt.zip
+unzip data/corpus.txt.zip
+
+# Train the embedding:
 nanotext train --corpus data/corpus.txt --out data/embedding.genomes.model
 
-# or use pretrained model
+# Alternatively, use the pretrained model provided in this repo:
 nanotext search \
     --embedding data/embedding.genomes.model \
     --genome data/TARA_ION_MAG_00012.domtbl.tsv \

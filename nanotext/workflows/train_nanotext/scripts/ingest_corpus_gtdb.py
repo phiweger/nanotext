@@ -16,7 +16,10 @@ from nanotext.utils import create_domain_sequence
 @click.option(
     '--outfile', help='Where to store corpus',
     type=click.Path(), required=True)
-def ingest(indir, outfile):
+@click.option(
+    '--minlen', help='Minimum number of domains per contig',
+    default=0)
+def ingest(indir, outfile, minlen):
     '''
     Ingest a collection of protein domain annotations generated using
     `pfam_scan.pl` into a corpus for later use with Doc2Vec.
@@ -40,11 +43,16 @@ def ingest(indir, outfile):
             # UBA9934_pfam.tsv
             # GB_GCA_001790445.1_pfam.tsv
             # RS_GCF_000012865.1_pfam.tsv
-            if not 'UBA' in genome:
+
+            # adjust name if pfam table name from GTDB
+            if (not 'UBA' in genome) and \
+               (any(x in genome for x in ['RS_', 'GB_'])):
                 genome = '_'.join(genome.split('_')[1:])
+
     
             for k, v in seq.items():
-                out.write(f'{genome}\t{k}\t{",".join(v)}\n')
+                if len(v) > minlen:
+                    out.write(f'{genome}\t{k}\t{",".join(v)}\n')
 
 
 if __name__ == '__main__':

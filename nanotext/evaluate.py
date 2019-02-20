@@ -42,13 +42,6 @@ def odd_one(fp_test_corpus, fp_model, n_not_odd=5):
 
 
 
-
-
-
-
-
-
-
 '''
 # load model and vocabulary
 model = Doc2Vec.load('embedding.doc2vec.model')

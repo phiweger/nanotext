@@ -219,3 +219,24 @@ def save_embedding(prefix, model):
         for k in model.docvecs.doctags.keys():
             v = ' '.join([str(i) for i in model.docvecs[k]])
             out.write(f'{k} {v}\n')
+
+
+def load_taxonomy_gtdb(fp):
+    '''
+    Does what it says on the tin and returns a dict.
+    '''
+    from nanotext.utils import strip_name
+
+    # d__Bacteria;p__Firmicutes_F;c__Halanaerobiia;o__Halanaerobiales;f__Halothermotrichaceae;g__Halothermothrix;s__Halothermothrix oreni
+    taxa = {}
+    with open(fp, 'r') as file:
+        for line in file:
+            name, ranks = line.strip().split('\t')
+            name = strip_name(name)
+            ranks = ranks.split(';')
+            taxa[name] = [rank[3:] for rank in ranks]  # g__Halothermothrix
+
+    return taxa
+
+
+

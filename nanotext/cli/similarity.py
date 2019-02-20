@@ -70,18 +70,86 @@ def compare(genome, topn, out):
 
 @click.command()
 @click.option(
-    '--genome',
-    help='Params for training the embedding.')
-@click.option(
     '--topn', 
-    help='Corpus of protein domains to train on.', 
-    type=click.Path())
+    help='Number of top similar vectors', default=10)
 @click.option(
-    '--out',
-    help='Model name (output).')
-def taxonomy(genome, topn, out):
-    print('cello')
-    # get similar genomes and their taxon -- try assign taxon
+    '--outfile', '-o',
+    help='Where to write results', required=True, type=click.Path())
+@click.option(
+    '--embedding',
+    help='Genome embedding model', required=True, type=click.Path())
+@click.option(
+    '--taxonomy',
+    help='File path to GTDB taxonomy', required=True, type=click.Path())
+@click.option(
+    '--query',
+    help='File path genome annotation', required=True, type=click.Path())
+@click.option(
+    '--fmt',
+    help='Query fmt (pfamscan or hmmer)', default='hmmer')
+def taxonomy(query, taxonomy, embedding, topn, outfile, fmt):
+    '''
+    Given a query vector, get the <n> closest vectors and their taxonomy and
+    then report their <raw> taxonomy or use <majority vote> to identify the
+    most likely (?) one.
+
+    Usage:
+
+    \b
+    nanotext taxonomy \\
+        --embedding nanotext_r89.model --taxonomy bac_taxonomy_r86.tsv \\
+        --query JFOD01_pfam.tsv --fmt pfamscan --topn 10 -o results.json
+
+    '''
+    from collections import Counter, defaultdict
+    import json
+    import random
+
+    from nanotext.io import load_taxonomy_gtdb, load_embedding, eprint
+    from nanotext.utils import infer_genome_vector
+
+
+    ranks = [
+        'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species']
+    results = {}
+    results['topn'] = topn
+    results['raw'] = {}
+    notfound = []
+    
+    db = load_taxonomy_gtdb(taxonomy)
+    model = load_embedding(embedding)
+
+    v = infer_genome_vector(query, model, fmt=fmt)
+    sim = model.docvecs.most_similar([v], topn=topn)
+    
+    vote = defaultdict(list)
+    names = {}
+    for name, cos_sim in sim:
+        names[name] = round(cos_sim, 4)
+        try:
+            d = {k: v for k, v in zip(ranks, db[name])}
+            for k, v in d.items():
+                vote[k].append(v)
+        except KeyError:
+            # eprint(f'{name} has no taxonomy record')
+            notfound.append(name)
+            continue
+
+    results['notfound'] = notfound
+    results['similarity'] = names
+
+    majority = {}
+    for rank, taxa in vote.items():
+        results['raw'][rank] = taxa
+        cnt = Counter(taxa)
+        maxn = max(cnt.values())
+        hits = [k for k, v in cnt.items() if v == maxn]
+        majority[rank] = random.choice(hits)
+
+    results['majority'] = majority
+    
+    with open(outfile, 'w+') as out:
+        json.dump(dict(sorted(results.items())), out, indent=4)
 
 
 @click.command()
