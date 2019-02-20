@@ -87,7 +87,10 @@ def compare(genome, topn, out):
 @click.option(
     '--fmt',
     help='Query fmt (pfamscan or hmmer)', default='hmmer')
-def taxonomy(query, taxonomy, embedding, topn, outfile, fmt):
+@click.option(
+    '--steps',
+    help='How many epochs for vector inference', default=200)
+def taxonomy(query, taxonomy, embedding, topn, outfile, fmt, steps):
     '''
     Given a query vector, get the <n> closest vectors and their taxonomy and
     then report their <raw> taxonomy or use <majority vote> to identify the
@@ -119,7 +122,7 @@ def taxonomy(query, taxonomy, embedding, topn, outfile, fmt):
     db = load_taxonomy_gtdb(taxonomy)
     model = load_embedding(embedding)
 
-    v = infer_genome_vector(query, model, fmt=fmt)
+    v = infer_genome_vector(query, model, fmt=fmt, steps=steps)
     sim = model.docvecs.most_similar([v], topn=topn)
     
     vote = defaultdict(list)
@@ -138,15 +141,19 @@ def taxonomy(query, taxonomy, embedding, topn, outfile, fmt):
     results['notfound'] = notfound
     results['similarity'] = names
 
-    majority = {}
+    majority, majority_ratio = {}, {}
+
     for rank, taxa in vote.items():
         results['raw'][rank] = taxa
         cnt = Counter(taxa)
         maxn = max(cnt.values())
         hits = [k for k, v in cnt.items() if v == maxn]
-        majority[rank] = random.choice(hits)
+        pick = random.choice(hits)
+        majority[rank] = pick
+        majority_ratio[rank] = round(cnt[pick]/len(taxa), 2)
 
     results['majority'] = majority
+    results['ratio'] = majority_ratio
     
     with open(outfile, 'w+') as out:
         json.dump(dict(sorted(results.items())), out, indent=4)

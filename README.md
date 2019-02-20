@@ -76,7 +76,7 @@ nanotext taxonomy \
     --embedding nanotext_r89.model --taxonomy bac_taxonomy_r86.tsv \
     --query JFOD01_pfam.tsv --fmt pfamscan --topn 10 -o results.json
 
-cat results.json | jq ".majority"
+cat results.json | jq ".majority,.ratio"
 ```
 
 
@@ -93,5 +93,14 @@ This is what the result looks like (the file contains raw taxonomy and cosine si
   "family": "Cyanobiaceae",
   "genus": "Prochlorococcus_A",
   "species": "Prochlorococcus_A sp1"
+}
+{
+  "domain": 1,
+  "phylum": 1,
+  "class": 1,
+  "order": 1,
+  "family": 1,
+  "genus": 0.83,
+  "species": 0.5
 }
 ```
