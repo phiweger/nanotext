@@ -4,7 +4,8 @@ This library enables the use of embedding vectors generated from a large corpus 
 
 You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
 
-Install and run tests: 
+
+## Installation and tests
 
 
 ```bash
@@ -14,6 +15,8 @@ pip install -e .
 pytest  # or python setup.py test
 ```
 
+
+## Training and prediction
 
 As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9).
 
@@ -62,6 +65,8 @@ nanotext predict \
 
 The result is a list of media IDs and their cosine similarity to the prediction. Now you can check out the associated media ingredients from the [DSMZ list of recommended media for microorganisms](https://www.dsmz.de/catalogues/catalogue-microorganisms/culture-technology/list-of-media-for-microorganisms.html).
 
+
+## Taxonomy
 
 Given a contig from a metagenome assembly, you can query its likely taxonomy like so:
 
