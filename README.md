@@ -61,3 +61,32 @@ nanotext predict \
 
 
 The result is a list of media IDs and their cosine similarity to the prediction. Now you can check out the associated media ingredients from the [DSMZ list of recommended media for microorganisms](https://www.dsmz.de/catalogues/catalogue-microorganisms/culture-technology/list-of-media-for-microorganisms.html).
+
+
+Given a contig from a metagenome assembly, you can query its likely taxonomy like so:
+
+
+```bash
+nanotext taxonomy \
+    --embedding nanotext_r89.model --taxonomy bac_taxonomy_r86.tsv \
+    --query JFOD01_pfam.tsv --fmt pfamscan --topn 10 -o results.json
+
+cat results.json | jq ".majority"
+```
+
+
+This is what the result looks like (the file contains raw taxonomy and cosine similarity values for the top hits, too, in case this is of value):
+
+
+
+```json
+{
+  "domain": "Bacteria",
+  "phylum": "Cyanobacteriota",
+  "class": "Cyanobacteriia",
+  "order": "Synechococcales_A",
+  "family": "Cyanobiaceae",
+  "genus": "Prochlorococcus_A",
+  "species": "Prochlorococcus_A sp1"
+}
+```
