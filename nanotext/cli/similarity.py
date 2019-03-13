@@ -104,59 +104,140 @@ def taxonomy(query, taxonomy, embedding, topn, outfile, fmt, steps):
         --query JFOD01_pfam.tsv --fmt pfamscan --topn 10 -o results.json
 
     '''
+
+    '''
+    TODO: new fmt
+
+    name, cos, ranks
+
+    2nd output
+
+    majority vote across columns
+    '''
     from collections import Counter, defaultdict
     import json
+    import pdb
     import random
 
+    import numpy as np
+    from sklearn.manifold import TSNE
+    import umap
+
     from nanotext.io import load_taxonomy_gtdb, load_embedding, eprint
-    from nanotext.utils import infer_genome_vector
+    from nanotext.utils import infer_genome_vector, strip_name
+
+
+    config_umap_visualisation = {
+        'metric': 'cosine',
+        'n_components': 2,
+        # 'repulsion_strength': 5,
+        # 'n_neighbors': 5,
+        # min_dist=0.05,
+        # 'spread': 5,
+        'random_state': 42,
+        }
 
 
     ranks = [
         'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species']
-    results = {}
-    results['topn'] = topn
-    results['raw'] = {}
     notfound = []
     
     db = load_taxonomy_gtdb(taxonomy)
     model = load_embedding(embedding)
 
-    v = infer_genome_vector(query, model, fmt=fmt, steps=steps)
-    sim = model.docvecs.most_similar([v], topn=topn)
-    
-    vote = defaultdict(list)
-    names = {}
+    v_query = infer_genome_vector(query, model, fmt=fmt, steps=steps)
+    sim = model.docvecs.most_similar([v_query], topn=topn)
+
+
+    taxcollector = {i: [] for i in ranks}
+    distance = {}
+
     for name, cos_sim in sim:
-        names[name] = round(cos_sim, 4)
+        distance[name] = round(cos_sim, 4)
         try:
-            d = {k: v for k, v in zip(ranks, db[name])}
-            for k, v in d.items():
-                vote[k].append(v)
+            for k, v in zip(ranks, db[name]):
+                taxcollector[k].append(v)
+
         except KeyError:
-            # eprint(f'{name} has no taxonomy record')
-            notfound.append(name)
+            eprint(f'{name} has no taxonomy record')
             continue
 
-    results['notfound'] = notfound
-    results['similarity'] = names
 
-    majority, majority_ratio = {}, {}
+    # What is the last uniform rank?
+    cache = ()
+    for i in ranks:
+        if (len(set(taxcollector[i])) == 1) and (taxcollector[i][0] != ''):
+            cache = (i, taxcollector[i][0])
+            continue
+        else:
+            pass
+    
 
-    for rank, taxa in vote.items():
-        results['raw'][rank] = taxa
-        cnt = Counter(taxa)
-        maxn = max(cnt.values())
-        hits = [k for k, v in cnt.items() if v == maxn]
-        pick = random.choice(hits)
-        majority[rank] = pick
-        majority_ratio[rank] = round(cnt[pick]/len(taxa), 2)
+    # p__Firmicutes_A
+    # Collect the UIDs for this rank.
+    eprint(f'Will collect all vectors for {cache[0]} {cache[1]} ...')
+    names = []
+    with open(taxonomy, 'r') as file:
+        for line in file:
+            # if 'c__Clostridia' in line:
+            # if 'f__Pseudomonadaceae' in line:
+            # if ('p__Firmicutes_A' in line) or ('p__Firmicutes_B' in line): 
+            if f'{cache[0][0]}__{cache[1]}' in line:  # d__ for domain etc.
+                names.append(line.strip().split('\t')[0])
 
-    results['majority'] = majority
-    results['ratio'] = majority_ratio
+
+    # Collect the associated document vector for each UID.
+    m, found = [], []
+    for name in names:
+        try:
+            m.append(model.docvecs[strip_name(name)])
+            found.append(strip_name(name))
+        except KeyError:
+            continue
+
+
+    # Project into 2D.
+    eprint(f'Projecting with UMAP ...')
+    m = np.array(m, dtype='float64')
+    reducer = umap.UMAP(**config_umap_visualisation)
+    # projection = reducer.fit_transform(m)
+    eprint(f'Projecting with TSNE ...')
+    projection = TSNE(n_components=2, random_state=42).fit_transform(m)
+
+    results = defaultdict(list)
+    # results['query'].extend(reducer.transform([v_query])[0])
+    # results['query'].extend(7*['query'])
+
+    for i, j in zip(found, projection):
+        results[i].extend(j)
+        results[i].extend(db[i])
+
+
+    # Add distance info.
+    for k, v in results.items():
+        results[k].append(distance.get(k, 'NA'))
+
+    # majority, majority_ratio = {}, {}
+
+    # for rank, taxa in vote.items():
+    #     results['raw'][rank] = taxa
+    #     cnt = Counter(taxa)
+    #     maxn = max(cnt.values())
+    #     hits = [k for k, v in cnt.items() if v == maxn]
+    #     pick = random.choice(hits)
+    #     majority[rank] = pick
+    #     majority_ratio[rank] = round(cnt[pick]/len(taxa), 2)
+
+    # results['majority'] = majority
+    # results['ratio'] = majority_ratio
     
     with open(outfile, 'w+') as out:
-        json.dump(dict(sorted(results.items())), out, indent=4)
+        out.write('\t'.join(
+            'name c1 c2 domain phylum class order family genus species cos'.split())+'\n')
+        # json.dump(dict(sorted(results.items())), out, indent=4)
+        for k, v in results.items():
+            line = '\t'.join([str(i) for i in [k]+v])+'\n'
+            out.write(line)
 
 
 @click.command()

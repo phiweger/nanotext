@@ -110,3 +110,61 @@ def semantics():
 def cluster():
     pass
 
+
+def ecotype_task(ecotypes, model):
+    '''
+    Ecotypes are passed as a dict of (GenBank/ RefSeq) UIDs and their corresponding ecotype:
+    
+    {'GCA_000877625.1': 'VppAsia', ...}
+    
+    Usage:
+    
+    from nanotext.io import load_ecotypes, load_embedding
+    from nanotext.evaluate import ecotype_task
+
+    task = 'pseudomonas'
+    fp = f'/path/to/data/{task}/ecotypes_r86.tsv'
+    rank, ecotypes = load_ecotypes(fp)
+    fp = f'/path/to/nanotext_r89.model'
+    model = load_embedding(fp)
+
+    ecotype_task({k: v2 for k, (v1, v2) in ecotypes.items()}, model)
+    '''
+    from collections import defaultdict
+    import numpy as np
+
+    pos, neg = 0, 0
+    notfound = []
+
+    # discard all keys that are not present in the model
+    for k in ecotypes.keys():
+        try:
+            _ = model.docvecs[k]
+        except KeyError:
+            notfound.append(k)
+
+    for k in notfound:
+        del ecotypes[k]
+
+    d = defaultdict(list)
+    for ix, (name, ecotype) in enumerate(ecotypes.items()):
+        all_but_ix = list(ecotypes.keys())
+        del all_but_ix[ix]
+        nn = model.docvecs.most_similar_to_given(name, all_but_ix) 
+        # nn .. nearest neighbor
+        ne = ecotypes[nn]
+        # ne .. nearest ecotype
+        if ecotype == ne:
+            d[ecotype].append(1)
+            # pos += 1
+        else:
+            d[ecotype].append(0)
+            # neg += 1
+    
+    result = {}
+    for k, v in d.items():
+        result[k] = round(np.sum(v)/len(v), 4)
+
+    return result
+
+

@@ -9,6 +9,8 @@ def strip_name(name):
     '''
     if 'UBA' in name:
         return name
+    elif 'U_' in name:
+        return name
     else:
         return '_'.join(name.split('_')[1:])
 
@@ -195,7 +197,7 @@ def create_domain_sequence(domains, keep_unknown=True, fmt_fn=lambda x: x):
     return result
 
 
-def infer_genome_vector(fp, model, steps=200, fmt='hmmer'):
+def infer_genome_vector(fp, model, steps=200, fmt='hmmer', truncate_by=0):
     '''
     From a genome annotation either from Pfam or HMMER (formatted w/ HMMPy.py)
     infer a genome vector.
@@ -218,15 +220,267 @@ def infer_genome_vector(fp, model, steps=200, fmt='hmmer'):
     dom = BedTool(list(result.values()))
     seq = create_domain_sequence(
         dom, keep_unknown=True, fmt_fn=lambda x: x.split('.')[0])
+    # fmt_fn here splits version number from Pfam domain PF00001.1 -> PF00001  
     
     # concatenate protein domain sequences from contigs
-    flat = [item for sublist in seq.values() for item in sublist]
+    if truncate_by:
+        flat = [item for sublist in truncate(seq.values(), truncate_by) for item in sublist]
+    else:
+        flat = [item for sublist in seq.values() for item in sublist]
     
     # 200 epochs inference gives a varience < 0.01 cosine distance on
     # when repeatedly inferring vectors (from our experiments)
     return model.infer_vector(flat, steps=steps)  
     
     
+def truncate(sequences, by=0.5):
+    '''Given several sequences, truncate them <by> a given fraction.'''
+    import random
+
+    for seq in sequences:
+        cut = int(by*len(seq))
+        start = random.choice(range(0, len(seq)-cut))
+        seq1 = seq[:start]
+        seq2 = seq[start+cut:]
+        for j in [seq1, seq2]:
+            if j:
+                yield j
+
+
+def subset_taxonomy(query, taxa):
+    '''
+    Given a query in the GTDB format of <first letter rank>__<name> (e.g.
+    "f__Pseudomonadaceae"), return all IDs from the taxonomy database. 
+    '''
+    taxon, name = query.split('__')
+    groups = 'd p c o f g s'.split()
+    result = []
     
+    for k, v in taxa.items():
+        d = dict(zip(groups, v))
+        if d[taxon] == name:
+            result.append(k)
+    return result
 
 
+def subset_model_by_rank(model, db, taxon):
+    '''
+    From a taxonomy database, select those records in the model that match.
+    '''
+    entries = model.docvecs.index2entity
+    ranks = 'd p c o f g s'.split()
+    # domain phylum class order family genus species
+    rank, name = taxon.split('__')
+    ix = [i for i, j in enumerate(ranks) if j == rank][0]
+    
+    cnt, found = 0, []
+    for entry in entries:
+        record = db.get(entry, None)
+        try:
+            if record[ix] == name:
+                found.append(entry)
+        except TypeError:
+            cnt += 1
+            continue
+
+    return found
+
+
+def get_vectors(l, model, normalized=False):
+    '''Get array of document vectors given an ID list and a model'''
+    import numpy as np
+    from sklearn.preprocessing import normalize
+
+    from nanotext.io import eprint
+
+    m, found = [], []
+    cnt = 0
+
+    for i in l:
+        try:
+            m.append(model.docvecs[i])
+            found.append(i)
+        except KeyError:
+            cnt += 1
+
+    m = np.array(m, dtype='float64')
+    if normalized:
+        m = normalize(m, norm='l2', axis=1)
+    if cnt:
+        eprint(f'{cnt} entries missing ({round(cnt/len(l), 4)} %)')
+    return found, m
+
+
+
+def flatten(l):
+    '''
+    Given a nested iterable return unnested items in list.
+    '''
+    # import itertools
+    # stackoverflow.com/questions/952914
+    # return [item for sublist in l for item in sublist]
+    # return list(itertools.chain.from_iterable(l))
+    # Problem: both split strings
+    # stackoverflow.com/questions/5286541
+    for x in l:
+        if hasattr(x, '__iter__') and not isinstance(x, str):
+            for y in flatten(x):
+                yield y
+        else:
+            yield x
+
+
+def get_names_from_taxon(db, taxon):
+    '''Given a taxon in GTDB format (e.g. c__Clostridia) return model UIDs'''
+    from nanotext.utils import strip_name
+    from nanotext.io import dbopen
+
+    groups = {
+        'c': 'class',
+        's': 'species',
+        'p': 'phylum',
+        'f': 'family',
+        'd': 'domain',
+        'o': 'order',
+        'g': 'genus',}
+    rank = groups[taxon.split('__')[0]]  # c__Clostridia
+
+    with dbopen(db) as cursor:
+        tablename = 'metadata'
+        t = (taxon,)
+        cursor.execute(
+            f'SELECT accession FROM {tablename} WHERE gtdb_{rank}=?', t)
+        l = [strip_name(i[0]) for i in cursor.fetchall()]  
+        # ('GB_GCA_002409805.1',),
+    return l
+
+
+def index_model(names, models, norm='l2'):
+    '''
+    To normalize or not to normalize:
+    
+    - stats.stackexchange.com/questions/177905
+    - stackoverflow.com/questions/36034454
+    '''
+    import faiss
+    import numpy as np
+    from sklearn.preprocessing import normalize
+    
+    from nanotext.io import eprint
+    
+    m = []
+    found, notfound = [], 0
+
+    for i in names:
+        model_vv = []
+        try:
+            for model in models:
+                model_vv.append(model[i])
+        except KeyError:
+            notfound += 1
+            continue
+        
+        sum_ = np.sum(model_vv, axis=0)/len(model_vv)
+        found.append(i)
+        m.append(sum_)
+        # if only one model is present, this will return the original vector
+    
+    db = np.array(m, dtype='float32')
+    dim = db.shape[1]  # dimensions
+    
+    if not norm:
+        index = faiss.IndexFlatL2(dim)
+    elif norm == 'l2':
+        index = faiss.IndexFlatIP(dim)
+        db = normalize(db, norm=norm, axis=1)
+        # the inner product IP of two unit length vectors = cosine similarity
+    else:
+        raise ValueError('This norm is not supported, abort!')
+
+    index.add(db)
+    if notfound > 0:
+        fraction = round(notfound/len(names), 4)
+        eprint(f'{notfound} entries ({fraction}) not found.')
+    return found, db, index
+
+
+def subtract_mean(model, dtype='float32'):
+    '''Subtract mean vector from model and return vector collection (matrix)
+
+    Suggestion from "All-but-the-top" paper (https://arxiv.org/abs/1702.01417).
+
+    Usage:
+
+    m_ = subtract_mean(model)  # m_ .. m minus
+    '''
+    import numpy as np
+    
+    vv = []
+    names = model.docvecs.index2entity
+    for i in names:
+        vv.append(model.docvecs[i])
+    m = np.array(vv, dtype=dtype)
+    mu = np.mean(m, axis=0)
+    return dict(zip(names, m-mu))
+
+
+def query_model(v, index, names, topn=1, norm='l2'):
+    '''k-nearest neighbor search'''
+    import numpy as np
+    from sklearn.preprocessing import normalize
+
+    v = np.array([v], dtype='float32')
+    if not norm:
+        pass
+    elif norm == 'l2':
+        v = normalize(v, norm=norm, axis=1)
+    else:
+        raise ValueError('This norm is not supported, abort!')
+
+    D, I = index.search(v, topn)
+    
+    result = {}
+    for d, i in zip(D[0], I[0]):
+        result[names[i]] = d
+
+    return result
+
+
+def get_taxa_from_names(db, names):
+    '''Given a list of IDs return GTDB taxonomy
+
+    The order of <names> is preserved, e.g. if they are sorted by distance.
+    '''
+    import pandas as pd
+
+    from nanotext.utils import strip_name
+    from nanotext.io import dbopen
+
+    
+    with dbopen(db) as cursor:
+        # cannot use placeholders here
+        # stackoverflow.com/questions/31277027
+        
+        # needs to be a tuple otherwise OperationalError: no such table ...
+        n = tuple(names)
+        # hack that covers case of only one query
+        # problem is that tuple([1]) -> tuple(1,)
+        # -- trailing comma causes error
+        if len(n) == 1:
+            n = n*2
+        
+        statement = f'SELECT accession_redux, gtdb_taxonomy FROM metadata WHERE accession_redux IN {n}'
+        # statement = f'SELECT accession_redux, gtdb_taxonomy FROM metadata WHERE accession_redux = {n}'
+        
+        cursor.execute(statement)
+        l = cursor.fetchall()
+    
+    # order of names is preserved, e.g. when ordered by distance
+    taxa = {}
+    for name, taxon in l:
+        # 'd__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;[...]'
+        taxa[name] = [name] + [j.split('__')[1] for j in taxon.split(';')]
+    df = pd.DataFrame.from_records([taxa[i] for i in names])  # preserves order
+    
+    df.columns = 'name domain phylum class order family genus species'.split()
+    return df

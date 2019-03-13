@@ -98,9 +98,10 @@ def cluster_subset(model, rank, name, taxonomy, outfile, soft, ecotypes, project
         'random_state': 42,
         }
     
+    # min_cluster_size 3 leaf works great
     config_hdbscan = {
-        'min_cluster_size': 7,
-        'min_samples': 1,
+        'min_cluster_size': 5,
+        # 'min_samples': 1,
         'cluster_selection_method': 'eom',
         }
 
@@ -226,7 +227,7 @@ p <- ggplot() +
     # geom_point(
     #     data=subset(anno, cluster==COI),  # -1
     #     aes(x=c1, y=c2), size=2*size, color='red') +
-    guides(color=FALSE) +
+    # guides(color=FALSE) +
     theme_classic() +
     # scale_x_continuous(limits=c(10, 25)) +
     # scale_y_continuous(limits=c(-5, 2)) +

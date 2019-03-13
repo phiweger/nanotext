@@ -1,4 +1,6 @@
 import contextlib
+import sqlite3
+
 
 @contextlib.contextmanager
 def smart_open(filename=None):
@@ -239,4 +241,42 @@ def load_taxonomy_gtdb(fp):
     return taxa
 
 
+def load_ecotypes(fp):
+    d = {}
+    with open(fp, 'r') as file:
+        _ = next(file)  # header
+        for line in file:
+            uid, sample, _, rank, ecotype, _ = line.strip().split('\t')
+            d[uid] = (sample, ecotype)
 
+    return rank, d
+
+
+class dbopen(object):
+    '''
+    Simple CM for sqlite3 databases. Commits everything at exit; adapted from
+
+    https://gist.github.com/miku/6522074
+
+    Usage:
+
+    fp = 'path/to/sqlite.db'
+    tablename = 'metadata'
+    with dbopen(fp) as c:
+        t = ('c__Clostridia',)
+        c.execute(f'SELECT * FROM {tablename} WHERE gtdb_class=?', t)
+        print(c.fetchone())
+    '''
+    def __init__(self, path):
+        self.path = path
+        self.conn = None
+        self.cursor = None
+
+    def __enter__(self):
+        self.conn = sqlite3.connect(self.path)
+        self.cursor = self.conn.cursor()
+        return self.cursor
+
+    def __exit__(self, exc_class, exc, traceback):
+        self.conn.commit()
+        self.conn.close()
