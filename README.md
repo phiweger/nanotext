@@ -4,6 +4,8 @@ This library enables the use of embedding vectors generated from a large corpus 
 
 You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
 
+All releases of `nanotext` starting with "r89" are pegged against releases of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
+
 
 ## Installation and tests
 
@@ -27,6 +29,8 @@ As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembl
 If you don't have annotations already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_tara).
 
 We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document. If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (280 MB) and train the embedding yourself (about 3 hours and 10 GB RAM on a recent MacBook Pro). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
+
+Update: We are working on a new release of `nanotext` (r89), incorporating about 145k genomes from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available already (see [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb)) , but the training params differ. We will update the code below accordingly, soon.
 
 
 ```bash
