@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='nanotext',
-    version='0.0.1',
+    version='0.1',
     author='Adrian Viehweger',
     author_email='foo@bar.com',
     description='Domains as words, genomes as documents.',
@@ -23,17 +23,18 @@ setup(
     tests_require=['pytest'],
 
     install_requires=[
-        'Click',
-        'numpy',
-        'pandas',
-        'tqdm',
+        'click==7.0',
+        'numpy==1.15.4',
+        'pandas==0.23.4',
+        'tqdm==4.26.0',
         'pysam==0.15.1',
-        # https://github.com/pysam-developers/pysam/issues/697
-        'pybedtools',
+        'scikit-learn==0.20.0',
+        'pybedtools==0.7.10',
         # relies on pysam
-        'gensim',
-        # ==3.7.1
-        # ==3.4
+        # https://github.com/pysam-developers/pysam/issues/697
+        'gensim==3.4.0',
+        # current version ==3.7.1
+        'faiss-cpu==1.5.0',
     ],
 
     # https://click.palletsprojects.com/en/7.x/setuptools/#testing-the-script
