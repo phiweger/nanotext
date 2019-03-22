@@ -15,6 +15,10 @@ pip install -e .
 pytest  # or python setup.py test
 ```
 
+## Quick start
+
+Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb) for a quick walkthrough.
+
 
 ## Training and prediction
 
