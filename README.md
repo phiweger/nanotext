@@ -11,10 +11,19 @@ All releases of `nanotext` starting with "r89" are pegged against releases of th
 
 
 ```bash
+# create a conda env
+conda create -y -n myenv && conda activate myenv
+conda install faiss-cpu -c pytorch  # for fast vector search
+
+# install nanotext library
 git clone https://github.com/phiweger/nanotext
 cd nanotext
 pip install -e .
 pytest  # or python setup.py test
+
+# install some libraries to work with the tutorial
+conda install jupyter  # notebook
+conda install -c conda-forge altair vega_datasets notebook vega  # vis
 ```
 
 ## Quick start
