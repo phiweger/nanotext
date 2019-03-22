@@ -361,6 +361,13 @@ def index_model(names, models, norm='l2'):
     
     - stats.stackexchange.com/questions/177905
     - stackoverflow.com/questions/36034454
+
+    Usage:
+
+    fp = f'{base}/models/{n}/nanotext_r89.model'
+    model3 = load_embedding(fp)
+    m3 = subtract_mean(model3)
+    found, m, index = index_model(names, [m1, m2, m3], norm=norm)
     '''
     import faiss
     import numpy as np
@@ -371,6 +378,7 @@ def index_model(names, models, norm='l2'):
     m = []
     found, notfound = [], 0
 
+    # first take mean of vectors ...
     for i in names:
         model_vv = []
         try:
@@ -388,6 +396,7 @@ def index_model(names, models, norm='l2'):
     db = np.array(m, dtype='float32')
     dim = db.shape[1]  # dimensions
     
+    # ... then normalize
     if not norm:
         index = faiss.IndexFlatL2(dim)
     elif norm == 'l2':
@@ -404,8 +413,12 @@ def index_model(names, models, norm='l2'):
     return found, db, index
 
 
-def subtract_mean(model, dtype='float32'):
+def subtract_mean(model, names=None, dtype='float32'):
     '''Subtract mean vector from model and return vector collection (matrix)
+
+    If no <names> (IDs) are provided, then all vectors in the model will be
+    averaged and subtracted. Otherwise this operation is only performed on the
+    subset defined by <names>.
 
     Suggestion from "All-but-the-top" paper (https://arxiv.org/abs/1702.01417).
 
@@ -414,11 +427,22 @@ def subtract_mean(model, dtype='float32'):
     m_ = subtract_mean(model)  # m_ .. m minus
     '''
     import numpy as np
+    from nanotext.io import eprint
     
     vv = []
-    names = model.docvecs.index2entity
+    if not names:
+        names = model.docvecs.index2entity
+    
+    notfound = 0
     for i in names:
-        vv.append(model.docvecs[i])
+        try:
+            vv.append(model.docvecs[i])
+        except KeyError:
+            notfound += 1
+            continue
+    
+    # eprint(f'{notfound} names {round(notfound/len(names), 4)} not found ...')
+
     m = np.array(vv, dtype=dtype)
     mu = np.mean(m, axis=0)
     return dict(zip(names, m-mu))
@@ -454,7 +478,7 @@ def get_taxa_from_names(db, names):
     import pandas as pd
 
     from nanotext.utils import strip_name
-    from nanotext.io import dbopen
+    from nanotext.io import dbopen, eprint
 
     
     with dbopen(db) as cursor:
@@ -480,7 +504,24 @@ def get_taxa_from_names(db, names):
     for name, taxon in l:
         # 'd__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;[...]'
         taxa[name] = [name] + [j.split('__')[1] for j in taxon.split(';')]
-    df = pd.DataFrame.from_records([taxa[i] for i in names])  # preserves order
-    
-    df.columns = 'name domain phylum class order family genus species'.split()
-    return df
+
+    found, notfound = [], []
+    for i in names:
+        taxon = taxa.get(i, None)
+        if taxon:
+            found.append(taxon)
+        else:
+            notfound.append(i)
+
+    # df = pd.DataFrame.from_records([taxa[i] for i in names])  
+    # preserves order
+    if notfound:
+        eprint(f'Did not find {len(notfound)} our of {len(names)} queries:')
+        eprint(notfound)
+    df = pd.DataFrame.from_records(found)
+    if df.empty:  # no query found -- len(pd.DataFrame.from_records([]))
+        return df
+    else:
+        df.columns = 'name domain phylum class order family genus species'.split()
+        return df
+
