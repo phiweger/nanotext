@@ -1,0 +1,15 @@
+{
+    "vector_size": 100,
+    "hs": 0,
+    "dm": 0,
+    "dbow_words": 1,
+    "epochs": 10,
+    "alpha": 0.025,
+    "min_alpha": 0.0001,
+    "seed": 42,
+    "ns_exponent": 0.75,
+    "window": 5,
+    "sample": 3e-05,
+    "min_count": 100,
+    "negative": 2
+}

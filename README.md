@@ -26,6 +26,7 @@ conda install jupyter  # notebook
 conda install -c conda-forge altair vega_datasets notebook vega  # vis
 ```
 
+
 ## Quick start
 
 Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb) for a quick walkthrough.

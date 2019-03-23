@@ -81,11 +81,11 @@ rule train_nanotext:
 
 
 # TODO: cluster -- note the ecotypes flag
-# python ~/Dropbox/repos_git/nanotext/nanotext/workflows/train_nanotext/scripts/cluster.py -m nanotext_r89.model --name Oxyphotobacteria --taxonomy /Users/phi/data_local/databases/gtdb/bac_taxonomy_r83.tsv -o clusters.tsv --ecotypes /Users/phi/data_local/nanotext_r89/prochlorococcus/ecotypes.tsv
+# python .../nanotext/nanotext/workflows/train_nanotext/scripts/cluster.py -m nanotext_r89.model --name Oxyphotobacteria --taxonomy /Users/phi/data_local/databases/gtdb/bac_taxonomy_r83.tsv -o clusters.tsv --ecotypes /Users/phi/data_local/nanotext_r89/prochlorococcus/ecotypes.tsv
 
 
 # TODO: new evaluate
-# python ~/Dropbox/repos_git/nanotext/nanotext/workflows/train_nanotext/scripts/evaluate_model.py -m nanotext_r89.model -i /Users/phi/tmp/cello/corpus.shuffle.test.txt -o evaluation.json --clusters clusters.tsv
+# python .../nanotext/nanotext/workflows/train_nanotext/scripts/evaluate_model.py -m nanotext_r89.model -i /Users/phi/tmp/cello/corpus.shuffle.test.txt -o evaluation.json --clusters clusters.tsv
 rule evaluate_nanotext:
     input:
         model = outdir + 'models/{id}/' + name,
@@ -99,10 +99,10 @@ rule evaluate_nanotext:
 
 
 # TODO vis clusters -- add file path
-# Rscript ~/Dropbox/repos_git/nanotext/nanotext/workflows/train_nanotext/scripts/vis_cluster.R clusters.tsv clusters.pdf
+# Rscript .../nanotext/nanotext/workflows/train_nanotext/scripts/vis_cluster.R clusters.tsv clusters.pdf
 
 
 # TODO vis ecotypes
-# Rscript ~/Dropbox/repos_git/nanotext/nanotext/workflows/train_nanotext/scripts/vis_ecotypes.R clusters.tsv ./
+# Rscript .../nanotext/nanotext/workflows/train_nanotext/scripts/vis_ecotypes.R clusters.tsv ./
 
 # rm Rplots.pdf
