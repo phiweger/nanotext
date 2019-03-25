@@ -1,8 +1,6 @@
 # nanotext
 
-This library enables the use of embedding vectors generated from a large corpus of protein domains to search for _similar_ genomes, where similar is the cosine similarity between one genome's vector and another's. Think about protein domains as words, genomes as documents, and search as a form of document retrieval based on the notion of _topic_. 
-
-You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
+This library enables the use of embedding vectors generated from a large corpus of protein domains to search for _similar_ genomes, where similar is the cosine similarity between one genome's vector and another's. Think about protein domains as words, genomes as documents, and search as a form of document retrieval based on the notion of _topic_. You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
 
 All releases of `nanotext` starting from r89 are pegged against the corresponding release of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
 
@@ -47,26 +45,7 @@ Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tut
 
 ## Training
 
-If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (6 GB unpacked) and train the embedding yourself (couple of hours, about 10 GB of RAM). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
-
-The currecnt release of `nanotext` (r89), incorporates about 145 thousand genomes with one billion domains from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF.
-
-We provide a [training and evaluation workflow](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/model_training). It assumes that for each set of hyperparameters you want to train, a corresponding config file is present in the workflow's `config/nanotext/` folder.
-
-
-```bash
-# First, download and unzip corpus from OSF, e.g. using osfclient:
-mkdir results && cd results
-osf -p pjf7m fetch corpus_r89.txt.zip && unzip corpus_89.txt.zip
-
-# Train the embedding
-# (1) cd into the workflow directory
-# (2) on a Mac, to avoid AppNap (training stopping halfway through) run
-defaults write org.python.python NSAppSleepDisabled -bool YES
-# (3) set the paths in config/snakemake.json
-# (4) train already
-snakemake -p --configfile config/snakemake.json --cores 8
-```
+If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (6 GB unpacked) and train the embedding yourself (couple of hours, about 10 GB of RAM). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below. The current release of `nanotext` (r89), incorporates about 145 thousand genomes with one billion domains from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF. We provide a [training and evaluation workflow](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/model_training).
 
 
 ## Search similar genomes and infer taxonomy
