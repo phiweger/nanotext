@@ -7,22 +7,30 @@ import click
 
 @click.command()
 @click.option(
-    '--genome',
-    help='Protein domain annotation',
+    '--annotation',
+    help='Protein domain annotation from pfam_scan.pl',
     type=click.Path())
 @click.option(
     '--topn', 
     help='Top n hits to return',
     default=10)
 @click.option(
-    '--embedding',
-    help='Genome embedding model',
+    '--models',
+    help='Genome embedding models',
     required=True, type=click.Path())
 @click.option(
+    '--mode',
+    help='Model w/ focus on core/ accessory/ an ensemble of domains',
+    default='core')
+@click.option(
+    '--taxonomy',
+    help='Lookup GTDB taxonomy for hits',
+    default=False)
+@click.option(
     '--out',
-    help='Output path. If not specified, write to stdout.',
+    help='Output path (tsv format). If not specified, write to stdout.',
     default='-')
-def search(genome, topn, embedding, out):
+def search(annotation, topn, models, mode, taxonomy, out):
     '''
     Usage:
 
@@ -37,18 +45,25 @@ def search(genome, topn, embedding, out):
     # GCF_000759855.1 0.9276
     # Done.
     '''
+    from nanotext.classes import GenomeModel
     from nanotext.io import load_embedding, smart_open, eprint
-    from nanotext.utils import infer_genome_vector
+    from nanotext.utils import infer_genome_vector, get_taxa_from_names
+
+    # fp, mode, 
 
     eprint('Loading model ...')
-    model = load_embedding(embedding)
-    eprint('Inferring genome vector ...')
-    v = infer_genome_vector(genome, model)
-    sim = model.docvecs.most_similar([v], topn=topn)
-
+    model = GenomeModel(models, mode=mode, norm='l2')
+    v = model.infer(annotation, fmt='pfamscan', steps=1000)
+    sim = model.search(v, topn)
     with smart_open(out) as fh:
         for name, cos in sim:
-            fh.write(f'{name}\t{round(cos, 4)}\n')
+            fh.write(f'{name}\t{round(float(cos), 4)}\n')
+
+    if taxonomy:
+        names, _ = zip(*sim)
+        df = get_taxa_from_names(taxonomy, names)
+        df.to_csv('taxonomy.tsv', sep='\t', index=None)
+
     eprint('Done.')
 
 

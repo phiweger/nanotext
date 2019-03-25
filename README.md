@@ -30,6 +30,16 @@ conda install -c conda-forge osfclient
 ```
 
 
+## Data
+
+We provide all data through the [Open Science Framework (OSF)](https://osf.io) because [reasons](http://ivory.idyll.org/blog/2017-osf-for-files.html). The project ID is `pjf7m` and you can either download the files manually or use the OSF client:
+
+
+```bash
+osf -p pjf7m fetch file
+```
+
+
 ## Quick start
 
 Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb) for a quick walkthrough.
@@ -37,7 +47,9 @@ Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tut
 
 ## Training
 
-Update: We are working on a new release of `nanotext` (r89), incorporating about 145k genomes from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF, project ID `pjf7m` (see the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb)).
+If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (6 GB unpacked) and train the embedding yourself (couple of hours, about 10 GB of RAM). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
+
+The currecnt release of `nanotext` (r89), incorporates about 145 thousand genomes with one billion domains from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF.
 
 We provide a training and evaluation workflow. It assumes that for each set of hyperparameters you want to train, a corresponding config file is present is the workflow's `config/nanotext/` folder.
 
@@ -45,25 +57,56 @@ We provide a training and evaluation workflow. It assumes that for each set of h
 ```bash
 # First, download and unzip corpus from OSF, e.g. using osfclient:
 mkdir results && cd results
-osf -p pjf7m fetch corpus_r89.txt.zip corpus_r89.txt.zip
-unzip corpus_89.txt.zip
+osf -p pjf7m fetch corpus_r89.txt.zip && unzip corpus_89.txt.zip
 
 # Train the embedding
 # (1) cd into the workflow directory
 # (2) on a Mac, to avoid AppNap (training stopping halfway through) run
 defaults write org.python.python NSAppSleepDisabled -bool YES
-# (3) train already
+# (3) set the paths in config/snakemake.json
+# (4) train already
 snakemake -p --configfile config/snakemake.json --cores 8
 ```
 
 
 ## Search similar genomes and infer taxonomy
 
-As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9).
+As an example, let's pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9).
 
-If you don't have annotations already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_hmmer).
+If you don't have annotations for your favourite microbe already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_pfamscan).
 
-We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document. If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (280 MB) and train the embedding yourself (about 3 hours and 10 GB RAM on a recent MacBook Pro). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
+We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document.
+
+
+```bash
+osf -p pjf7m fetch models.zip && unzip models.zip
+osf -p pjf7m fetch tara.zip && unzip tara.zip
+
+nanotext search --models models --topn 30 --mode core \
+  --annotation tara/TARA_ION_MAG_00012_pfam.tsv \
+  --out TARA_ION_MAG_00012.most_similar.tsv
+
+head -n3 TARA_ION_MAG_00012.most_similar.tsv
+# GCF_000158595.1 0.9534
+# GCF_000760055.1 0.9481
+# GCA_003281365.1 0.9462
+```
+
+
+Sometimes it's interesting to know which taxa these similar genomes are from, e.g. when trying to identify MAGs.
+
+
+```bash
+osf -p pjf7m fetch metadata_GTDB_r89.db
+nanotext search --models models 
+  --annotation tara/TARA_ION_MAG_00012_pfam.tsv \
+  --taxonomy metadata_GTDB_r89.db
+# will produce taxonomy.tsv
+
+head -n2 taxonomy.tsv
+# name  domain  phylum  class order family  genus species
+# GCF_000158595.1 Bacteria  Cyanobacteriota Cyanobacteriia  Synechococcales_A CyanobiaceaeProchlorococcus_A Prochlorococcus_A sp5
+```
 
 
 ## Prediction
@@ -77,18 +120,6 @@ DEPRECATED, will be replaced soon ...
 
 
 ```bash
-# Alternatively, use the pretrained model provided in this repo:
-nanotext search \
-    --embedding data/embedding.genomes.model \
-    --genome data/TARA_ION_MAG_00012.domtbl.tsv \
-    --topn 3 --out -
-# Loading model ...
-# Inferring genome vector ...
-# GCA_000634215.1 0.9344
-# GCF_000759935.1 0.9282
-# GCF_000759855.1 0.9276
-# Done.
-
 nanotext predict \
     --embedding data/embedding.genomes.model \
     --genome data/TARA_ION_MAG_00012.domtbl.tsv \
@@ -109,42 +140,3 @@ nanotext predict \
 
 The result is a list of media IDs and their cosine similarity to the prediction. Now you can check out the associated media ingredients from the [DSMZ list of recommended media for microorganisms](https://www.dsmz.de/catalogues/catalogue-microorganisms/culture-technology/list-of-media-for-microorganisms.html).
 
-
-## Taxonomy
-
-Given a contig from a metagenome assembly, you can query its likely taxonomy like so:
-
-
-```bash
-nanotext taxonomy \
-    --embedding nanotext_r89.model --taxonomy bac_taxonomy_r86.tsv \
-    --query JFOD01_pfam.tsv --fmt pfamscan --topn 10 -o results.json
-
-cat results.json | jq ".majority,.ratio"
-```
-
-
-This is what the result looks like (the file contains raw taxonomy and cosine similarity values for the top hits, too, in case this is of value):
-
-
-
-```json
-{
-  "domain": "Bacteria",
-  "phylum": "Cyanobacteriota",
-  "class": "Cyanobacteriia",
-  "order": "Synechococcales_A",
-  "family": "Cyanobiaceae",
-  "genus": "Prochlorococcus_A",
-  "species": "Prochlorococcus_A sp1"
-}
-{
-  "domain": 1,
-  "phylum": 1,
-  "class": 1,
-  "order": 1,
-  "family": 1,
-  "genus": 0.83,
-  "species": 0.5
-}
-```
