@@ -4,7 +4,7 @@ This library enables the use of embedding vectors generated from a large corpus 
 
 You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
 
-Starting from "r89", all future releases of `nanotext` are pegged against the corresponding release of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
+All releases of `nanotext` starting from r89 are pegged against the corresponding release of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
 
 
 ## Installation and tests
