@@ -81,6 +81,7 @@ We'll use the pretrained embedding to search for _functionally_ similar genomes,
 ```bash
 osf -p pjf7m fetch models.zip && unzip models.zip
 osf -p pjf7m fetch tara.zip && unzip tara.zip
+osf -p pjf7m fetch metadata_GTDB_r89.db
 
 nanotext search --models models --topn 30 --mode core \
   --annotation tara/TARA_ION_MAG_00012_pfam.tsv \
@@ -97,7 +98,6 @@ Sometimes it's interesting to know which taxa these similar genomes are from, e.
 
 
 ```bash
-osf -p pjf7m fetch metadata_GTDB_r89.db
 nanotext search --models models 
   --annotation tara/TARA_ION_MAG_00012_pfam.tsv \
   --taxonomy metadata_GTDB_r89.db
@@ -111,20 +111,16 @@ head -n2 taxonomy.tsv
 
 ## Prediction
 
-...
-
-
----
-
-DEPRECATED, will be replaced soon ...
+You can use genome vectors as direct input to machine learning algorithms. We provide a prove of principle, predicting culture media from a genome's protein domain annotation alone. This model was trained on the GTDB r83 and will NOT be ported to future releases. However, you can query your own MAGs nonetheless. Note also that for historical reasons, the annotation will have to be using `hmmer`, for which we provided a `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_hmmer).
 
 
 ```bash
+osf -p pjf7m fetch culture.zip && unzip culture.zip
 nanotext predict \
-    --embedding data/embedding.genomes.model \
-    --genome data/TARA_ION_MAG_00012.domtbl.tsv \
-    --model data/media_prediction.h5 \
-    --db data/embedding.media.json \
+    --embedding culture/embedding.genomes.model \
+    --genome culture/TARA_ION_MAG_00012.domtbl.tsv \
+    --model culture/media_prediction.h5 \
+    --db culture/embedding.media.json \
     --topn 3 --out -
 # Using TensorFlow backend.
 # Loading embedding model for genomes ...
