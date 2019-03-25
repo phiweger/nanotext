@@ -34,7 +34,7 @@ We provide all data through the [Open Science Framework (OSF)](https://osf.io) b
 
 
 ```bash
-osf -p pjf7m fetch file
+osf -p pjf7m fetch <filename>
 ```
 
 
