@@ -51,7 +51,7 @@ If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (6 GB unpac
 
 The currecnt release of `nanotext` (r89), incorporates about 145 thousand genomes with one billion domains from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF.
 
-We provide a training and evaluation workflow. It assumes that for each set of hyperparameters you want to train, a corresponding config file is present is the workflow's `config/nanotext/` folder.
+We provide a [training and evaluation workflow](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/model_training). It assumes that for each set of hyperparameters you want to train, a corresponding config file is present in the workflow's `config/nanotext/` folder.
 
 
 ```bash
