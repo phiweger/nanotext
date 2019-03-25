@@ -1,0 +1,97 @@
+'''
+# on a Mac, to avoid AppNap -- i.e. training stopping halfway through
+defaults write org.python.python NSAppSleepDisabled -bool YES
+
+snakemake -n -p --quiet --configfile config/snakemake.json --cores 8
+# -n .. dry run
+# -p .. print shell commands
+'''
+shell.executable('/bin/bash')
+
+
+# outdir = config['outdir'] + 'data/'
+# logdir = config['outdir'] + 'log/'
+outdir = config['results']
+name = config['name'] + '.model'
+
+
+HSET, = glob_wildcards(config['params'] + 'config.{hyperparamset}.json')
+
+
+rule all:
+    input:
+        expand(outdir + 'models/{hset}/' + name, hset=HSET),
+        expand(outdir + 'models/{hset}/evaluation.txt', hset=HSET),
+
+
+rule ingest_corpus:
+    '''
+    https://bitbucket.org/snakemake/snakemake/issues/961/rule-with-folder-as-input-and-output
+    '''
+    input: config['annotations']
+    output: outdir + 'corpus.txt'
+    shell:
+        '''
+        python scripts/ingest_corpus_gtdb.py \
+            --indir {input} --outfile {output}
+        '''
+
+
+rule shuffle_corpus:
+    input: outdir + 'corpus.txt'
+    output: outdir + 'corpus.shuffle.txt'
+    shell:
+        '''
+        shuf {input} > {output}
+        '''
+
+
+rule train_test_split:
+    '''
+    stackoverflow.com/questions/4881930
+    '''
+    input: outdir + 'corpus.shuffle.txt'
+    output:
+        train = outdir + 'corpus.shuffle.train.txt',
+        test = outdir + 'corpus.shuffle.test.txt',
+    params: 
+        ntest = 1000,
+        tmp = outdir + 'tmp.txt',
+    shell:
+        '''
+        tail -n {params.ntest} {input} > {output.test}
+        head -n -{params.ntest} {input} > {params.tmp}
+        mv {params.tmp} {output.train}
+        '''
+
+
+rule train_nanotext:
+    '''
+    # TODO: don't stream corpus but use new "corpus_file" interface
+    # cut -f3 corpus.shuffled.txt > corpus.shuffled.linesentence.txt
+    # https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
+    '''
+    input: outdir + 'corpus.shuffle.train.txt',
+    output: outdir + 'models/{id}/' + name
+    threads: config['cores_per_model']
+    params: config['params'] + 'config.{id}.json'
+    shell:
+        '''
+        nanotext train -i {input} -o {output} -t {threads} \
+            --config {params}
+        '''
+
+
+rule evaluate_nanotext:
+    input:
+        model = outdir + 'models/{id}/' + name,
+        test = outdir + 'corpus.shuffle.test.txt',
+    output: outdir + 'models/{id}/evaluation.txt',
+    shell:
+        '''
+        python scripts/evaluate_model.py \
+            --model {input.model} \
+            --corpus {input.test} \
+            --ecotypes data/ecotypes/ \
+            --outfile {output}
+        '''

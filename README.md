@@ -4,26 +4,29 @@ This library enables the use of embedding vectors generated from a large corpus 
 
 You can read more about this work in out [bioRxiv preprint](https://www.biorxiv.org/content/early/2019/01/18/524280). Name inspired by [`fastText`](https://fasttext.cc/).
 
-All releases of `nanotext` starting with "r89" are pegged against releases of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
+Starting from "r89", all future releases of `nanotext` are pegged against the corresponding release of the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/).
 
 
 ## Installation and tests
 
 
 ```bash
-# create a conda env
+# Create a new conda environment to experiment in
 conda create -y -n myenv && conda activate myenv
 conda install faiss-cpu -c pytorch  # for fast vector search
 
-# install nanotext library
+# Install the nanotext library
 git clone https://github.com/phiweger/nanotext
 cd nanotext
 pip install -e .
 pytest  # or python setup.py test
 
-# install some libraries to work with the tutorial
-conda install jupyter  # notebook
-conda install -c conda-forge altair vega_datasets notebook vega  # vis
+# For the tutorial, we need some notebook and visualisation libraries
+conda install jupyter
+conda install -c conda-forge altair vega_datasets notebook vega
+
+# To download from the project data on OSF using the command line
+conda install -c conda-forge osfclient
 ```
 
 
@@ -32,25 +35,48 @@ conda install -c conda-forge altair vega_datasets notebook vega  # vis
 Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb) for a quick walkthrough.
 
 
-## Training and prediction
+## Training
 
-As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9).
+Update: We are working on a new release of `nanotext` (r89), incorporating about 145k genomes from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available from OSF, project ID `pjf7m` (see the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb)).
 
-If you don't have annotations already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_tara).
-
-We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document. If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (280 MB) and train the embedding yourself (about 3 hours and 10 GB RAM on a recent MacBook Pro). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
-
-Update: We are working on a new release of `nanotext` (r89), incorporating about 145k genomes from the [Genome Taxonomy Database (GTDB)](http://gtdb.ecogenomic.org/). The associated corpus and models are available already (see [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb)) , but the training params differ. We will update the code below accordingly, soon.
+We provide a training and evaluation workflow. It assumes that for each set of hyperparameters you want to train, a corresponding config file is present is the workflow's `config/nanotext/` folder.
 
 
 ```bash
 # First, download and unzip corpus from OSF, e.g. using osfclient:
-osf -p pjf7m fetch corpus.txt.zip data/corpus.txt.zip
-unzip data/corpus.txt.zip
+mkdir results && cd results
+osf -p pjf7m fetch corpus_r89.txt.zip corpus_r89.txt.zip
+unzip corpus_89.txt.zip
 
-# Train the embedding:
-nanotext train --corpus data/corpus.txt --out data/embedding.genomes.model
+# Train the embedding
+# (1) cd into the workflow directory
+# (2) on a Mac, to avoid AppNap (training stopping halfway through) run
+defaults write org.python.python NSAppSleepDisabled -bool YES
+# (3) train already
+snakemake -p --configfile config/snakemake.json --cores 8
+```
 
+
+## Search similar genomes and infer taxonomy
+
+As an example, pass in a genome annotation of a _Prochlorococcus_ genome assembly based on data from the _Tara Ocean Expedition_ by [Delmont, T. O. et al. Nat Microbiol 3, 804–813 (2018)](https://www.nature.com/articles/s41564-018-0176-9).
+
+If you don't have annotations already, we provided a small `snakemake` workflow [here](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/annotation_hmmer).
+
+We'll use the pretrained embedding to search for _functionally_ similar genomes, where function is analogous to the topic of a document. If you're keen, you can [download the corpus](https://osf.io/pjf7m/) (280 MB) and train the embedding yourself (about 3 hours and 10 GB RAM on a recent MacBook Pro). Note that training is stochastic, and that the exact similarity values will differ slightly from the numbers below.
+
+
+## Prediction
+
+...
+
+
+---
+
+DEPRECATED, will be replaced soon ...
+
+
+```bash
 # Alternatively, use the pretrained model provided in this repo:
 nanotext search \
     --embedding data/embedding.genomes.model \
