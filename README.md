@@ -30,7 +30,7 @@ conda install -c conda-forge osfclient
 
 ## Data
 
-We provide all data through the [Open Science Framework (OSF)](https://osf.io) because [reasons](http://ivory.idyll.org/blog/2017-osf-for-files.html). The project ID is `pjf7m` and you can either download the files manually or use the OSF client:
+We provide all data through the [Open Science Framework (OSF)](https://osf.io) because [reasons](http://ivory.idyll.org/blog/2017-osf-for-files.html). The project ID is [`pjf7m`](https://osf.io/pjf7m/) and you can either download the files manually or use the OSF client:
 
 
 ```bash
