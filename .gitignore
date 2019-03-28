@@ -2,7 +2,7 @@
 *fai  # fasta indices
 
 # jupyter notebooks
-.ipynb_checkpoints
+# .ipynb_checkpoints
 
 # don't commit unfinished work
 wip/
