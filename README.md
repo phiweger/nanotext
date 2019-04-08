@@ -38,6 +38,9 @@ osf -p pjf7m fetch filename
 ```
 
 
+For the ecotype evaluation task we obtained published [ecotype labels](https://github.com/phiweger/nanotext/tree/master/nanotext/workflows/model_training/data/ecotypes) for three representative bacterial species (for details and references please refer to the preprint).
+
+
 ## Quick start
 
 Head over to the [tutorial](https://github.com/phiweger/nanotext/blob/master/tutorial/tara.ipynb) for a quick walkthrough.
