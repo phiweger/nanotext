@@ -10,8 +10,9 @@ All releases of `nanotext` starting from r89 are pegged against the correspondin
 
 ```bash
 # Create a new conda environment to experiment in
-conda create -y -n myenv && conda activate myenv
+conda create -y -n nanotext && conda activate nanotext
 conda install faiss-cpu -c pytorch  # for fast vector search
+conda install -y -c bioconda pybedtools pysam
 
 # Install the nanotext library
 git clone https://github.com/phiweger/nanotext

@@ -23,18 +23,18 @@ setup(
     tests_require=['pytest'],
 
     install_requires=[
-        'click==7.0',
-        'numpy==1.15.4',
-        'pandas==0.23.4',
-        'tqdm==4.26.0',
-        'pysam==0.15.1',
-        'scikit-learn==0.20.0',
-        'pybedtools==0.7.10',
+        'click',
+        'numpy',
+        'pandas',
+        'tqdm',
+        # 'pysam==0.15.1',
+        'scikit-learn',
+        # 'pybedtools==0.7.10',
         # relies on pysam
         # https://github.com/pysam-developers/pysam/issues/697
-        'gensim==3.4.0',
+        'gensim',
         # current version ==3.7.1
-        'faiss-cpu==1.5.0',
+        # 'faiss-cpu==1.5.0',
     ],
 
     # https://click.palletsprojects.com/en/7.x/setuptools/#testing-the-script

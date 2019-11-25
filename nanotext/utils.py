@@ -516,7 +516,7 @@ def get_taxa_from_names(db, names):
     # df = pd.DataFrame.from_records([taxa[i] for i in names])  
     # preserves order
     if notfound:
-        eprint(f'Did not find {len(notfound)} our of {len(names)} queries:')
+        eprint(f'Did not find {len(notfound)} out of {len(names)} queries:')
         eprint(notfound)
     df = pd.DataFrame.from_records(found)
     if df.empty:  # no query found -- len(pd.DataFrame.from_records([]))
